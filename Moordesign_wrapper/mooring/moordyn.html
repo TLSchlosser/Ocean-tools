@@ -1,0 +1,262 @@
+<HTML> <HEAD> <META NAME="Generator" CONTENT="Corel WordPerfect 8">
+<TITLE>Mooring Design and Dynamics</TITLE>
+</HEAD> <BODY BACKGROUND="texture.bmp" TEXT="#000000" LINK="#0000ff" VLINK="#551a8b"
+ALINK="#ff0000" BGCOLOR="#c0c0c0">
+<bgsound src="/music/undersea.mid" loop=infinite>
+
+<META  name="keywords" content="oceanographic mooring design cable dynamics ocean mooring
+design oceanography thermistor computer program MATLAB line position tension anchor graphics
+display wire rope chain current meter floatation sub-surface surface solution angle graphic user
+interface gui components">
+
+<img src="mdd.gif" align="left" hspace=20 vspace=10>
+<P ALIGN="CENTER"><FONT SIZE="+3"><b><font color="red">M</font>ooring <font color="red">D</font>esign &#38
+<font color="red">D</font>
+ynamics</b></FONT>
+<font size=+1><br>A Matlab Package for Designing and Testing Oceanographic Moorings
+<br><br>by<br>
+<a href="http://canuck.seos.uvic.ca/rkd/">Richard K. Dewey</a>,<br>
+<a href="http://ceor.seos.uvic.ca/">Centre for Earth and Ocean Research</a><br>
+<a href="http://www.uvic.ca/">University of Victoria</a> <br>
+<a href="http://www.city.victoria.bc.ca/">Victoria</a>, BC, Canada <br>
+Phone: (250)-472-4009  FAX: (250)-472-4030<br>
+<a href="mailto:RDewey@uvic.ca">RDewey@UVic.ca</a>
+<br><br><b>Latest Version is 1.1, Dec 1, 1999</b></font><br>
+<a href="http://canuck.seos.uvic.ca/rkd/mooring/mdd/mdd.html"
+title="Users Guide: 500 KBytes"><font size="+3">Also Checkout The New Users Guide</font></a></p><br><hr>
+
+<P><strong>Mooring Design and
+Dynamics</strong> <a href="http://canuck.seos.uvic.ca/rkd/mooring/menu.html">(available via FTP)</a> is a set of <a href=
+"http://www.mathworks.com/">MATLAB</a> (v5.X) routines to
+assist in the design and evaluation of single point oceanographic moorings and mooring data. Both
+surface (including "S" moorings) and sub-surface configurations can be "built" and evaluated using a
+set of graphic user interfaces and a preliminary database of components. The package allows the user
+to design and evaluate the dynamics of oceanographic moorings under the influence of time dependent 3
+dimensional currents by solving a set of force balance equations in order to determine the spatial
+position of each mooring element relative to the anchor. Once a mooring has been constructed using
+the MD&D set of programs, the position of each mooring element within a time dependent 3 dimensional
+sheared current [i.e. U(z,t), V(z,t), and W(z,t)] is calculated by solving for the balance of forces
+acting on it. Mooring elements may include current meters, in-line floats, thermistor chains,
+acoustic releases, etc., each with a specified weight(buoyancy), shape and effective fluid drag,
+which is information saved within an easily accessible database. Wire and chain segments are divided
+into multiple "hinged" pieces, so that the shape of the mooring will realistically represent a
+sub-surface or surface mooring under the influence of a sheared current.</P>
+
+<P> I have put together a <a href="http://canuck.seos.uvic.ca/rkd/mooring/mdd/mdd.html"
+title="Users Guide: 500 KBytes"><font size="+1">Users Guide</font></a>, which, for now, you can access,
+use, and evaluate from the www (its 500 KBytes, so modem users will need to be patient). I have also
+posted it as a zipped file
+<a href="http://canuck.seos.uvic.ca/rkd/mooring/menu.html">(mdddoc.zip)</a>
+for ftp download with the MD&D program code. The HTML Users Guide can be installed to provide local
+on-line help (from within MATLAB) to the many features and capabilities included in MD&D. If
+installed into /matlab/help/local/mdd/* it can be accessed from the MATLAB command prompt by typing
+"mdd". The old <a href="ftp://canuck.seos.uvic.ca/matlab/mooring/moordesign.txt">help file</a>
+is still included with the MD&D programs. </P>
+
+<p>The programs are written to use MATLAB's graphic user interface capabilities,
+<a href="mddfig1.gif"><img src="mddfig1sm.gif" align="left"></a>
+<a href="mddmoor1.gif"><img src="mddmoor1sm.gif" align="right"></a>
+ with pull down
+menus (i.e. see the figure to the left) and easy access to a mooring element database
+and the built-in features and strengths of MATLAB (i.e. 3D plot manipulations). Once a
+mooring has been designed (built), it can be evaluated and plotted (see the figure to
+the right). I have included "joiners", such as shackles, so that the mooring list
+represents a complete list of the mooring components, and can be used to determine the
+parts list for the mooring. The user can specify static current, wind and density
+fields, or load time dependent currents and density profiles to see how the mooring
+will respond to varying environmental conditions (wave action is not considered). A
+movie of the mooring motion can be generated for time dependent currents, or the
+vectors of time dependent mooring element positions can be saved for post processing
+and mooring motion correction. For surface moorings, the program will allow the
+mooring to become a sub-surface mooring if the currents are sufficiently strong.
+Therefore, the necessary buoyancy, wire tensions, and anchor weights can be evaluated
+under the most stringent and varied conditions anticipated. The mooring can easily be
+re-designed to maintain a specified depth, level of safety, or shape if necessary.</p>
+
+<h3>The Solution</h3>
+
+<P>The code for the dynamics (MOORDYN.M) solves for the positions of each mooring
+<a href="mddjdfs97.gif"><img src="mddjdfs97sm.gif" align="right"></a>
+element iteratively until the positions converge, usually only three iterations are
+required for sub-surface configurations. In a strongly sheared current and for
+surface moorings, as many as 100 iterations may be required. Mooring element positions
+are solved to within 1 cm in the vertical! The first pass (solution) starts with the
+mooring standing vertically in the water column. The water depth is set by the current
+profile. For subsurface moorings, it is assumed that the velocity data is sufficient
+to describe the currents throughout the water column, from the bottom (z=0) to a
+height that exceeds the vertical height of the mooring. For surface moorings, the top
+(highest) velocity value defines the water depth. A density profile, and even a time
+dependent density profile may be entered, as the drag depends (2%) on the water
+density. A constant wind can be set that produces an additional 2% surface current in
+the direction of the wind (modify the wind direction if you want to simulate Ekman
+drift), which decreases linearly to a depth that increases with wind speed. The model
+will predict if the surface float gets "dragged" under the surface by the currents.
+</p>
+
+<p>Once the first estimate of the "tilted" mooring has been made, new solutions are
+sought with the new positions of each element in the sheared current used to
+re-calculate the drag, considering "tilted" elements and appropriate drags. Also, now
+that the wire/rope are under tension, there may be stretching. The database assumes
+six different rope materials may be used (i.e. Steel, Nylon, Dacron, Polypropylene,
+Polyethylene, Dyneema, and Kevlar), for which appropriate moduli of elasticity are used. If the
+position of the top element (float) moves less than 1 cm (!) between iterations, then
+it is assumed the solution has converged and the position of the mooring has been
+found. Inertia is not considered, in that the solutions, even the time dependent ones
+are all assumed to be (locally) "static". In strongly sheared currents, where small
+differences in element depth may result in significant changes in the drag, and for
+surface float moorings, where the exact percentage of the required surface floatation
+needs to be determined, it may take many (100) iterations to converge. On a Pentium
+133MHz, this may take a few seconds. Once converged, the mooring is plotted, and the
+final element positions, wire tensions, lengths and angles can be printed.</P>
+
+<P>The solution assumes that each mooring element has a static force balance in each
+direction (x, y, and z), and that between solutions the mooring has time to adjust. No
+inertial affects are considered. The forces acting in the vertical direction are: 1)
+<STRONG>B</STRONG>uoyancy [mass times g] positive upwards (i.e. floatation), negative
+downwards (i.e. an anchor), 2) <STRONG>T</STRONG>ension from above [Newtons], 3)
+<STRONG>T</STRONG>ension from below, and 4) <STRONG>D</STRONG>rag from any vertical
+velocity. In each horizontal direction, the balance of forces is simply: 1) Angled
+<STRONG>T</STRONG>ension from above, 2) Angled <STRONG>T</STRONG>ension from below,
+and 3) <STRONG>D</STRONG>rag from the horizontal velocity. I do not calculate "lift".
+The net buoyancy is determined by the mass and displacement of the element and is
+constant. In MOORDESIGN.M the buoyancy is entered in [kg, positive upwards], and
+converted into a force in MOORDYN.M. The drag is determined for each element according
+to the shape, the exposed surface area of the element to the appropriate velocity
+component, and a drag coefficient (see below). Only cylinders and spherical shapes are
+assumed. More complicated shapes can always be approximated by either a cylinder or a
+sphere with an appropriate (adjusted) surface areas and drag coefficients. Spheres
+characterize devices whose surface area is isotropic, while cylinders are anisotropic
+with respect to vertical and horizontal directions. Vained devices are "modelled" as
+cylinders with appropriate surface areas and drag coefficient. </P>
+
+<P>For each element there are three equations and six unknowns (tension from above,
+tension from below, and the spherical coordinate angles the tensions make from the
+vertical (z) axis (psi) and in the x-y plane (theta). However, the top element has no
+tension from above and therefore, three unknowns and three equations. The tension and
+appropriate tension angles between any two elements is equal and acts in opposite
+directions, so that the tension from above for the lower element is equal and opposite
+to the tension and angles from below for the upper element. The method of solution is
+to estimate the lower tension and angles for the top element (floatation), and then
+subsequently estimate the tension and angles below each subsequent element. The
+resulting set of angles [psi(z) and theta(z)] and element lengths determines the exact
+(X, Y, Z) position of each mooring element relative to the anchor. Also, once the top
+of the anchor is reached, one has a direct estimate of the necessary tension required
+to "anchor" the mooring. This tension can then be inverted into an estimate of the
+required anchor weight. A Wood Hole (WHIO) safety factor is used to estimate a safe,
+realistic anchor weight.</P>
+
+<P>Specifically, the solution is obtained as follows. First the velocity (current) and
+density profiles and wire/chain sections are interpolated to approximately one metre
+vertical resolution using linear interpolation. Then the drag on each mooring element
+in a vertical orientation is calculated by,<br> <img src="mdeq01.gif" width="512"
+height="49" align=bottom ><br> where <EM>Q<SUB>j</SUB></EM>is the drag in [N] on an
+element in water of density <EM>rho<SUB>w</SUB></EM> in the direction j (x, y, or z),
+<EM>U<SUB>j</SUB></EM> is the velocity component at the depth of the mooring element
+with a drag coefficient <EM>C<SUB>D</SUB></EM> appropriate for the shape of the
+element, with surface area A perpendicular to the direction j. <STRONG>U</STRONG> is
+the total vector magnitude of the velocity,<br> <img src="mdeq02.gif" width="521"
+height="30" align=bottom ><br> at the depth of the element. The drag in all three
+directions is estimated, even the vertical component which in most flows is likely to
+be very small.</P>
+
+<P>Once the buoyancy and drag for each mooring element, and each segment of mooring
+wire and chain have been calculated, then the tension and the vertical angles
+necessary to hold that element in place (in the current) can be estimated. The three
+<em>[x,y,z]</em> component equations to be solved at each element are:<br> <img
+src="mdeq03.gif" width="530" height="90" align=bottom ><br> where
+<EM>T<SUB>i</SUB></EM> is the magnitude of the wire tension from above, making
+spherical angles <EM>psi<SUB>i</SUB></EM> and  <EM>theta<SUB>i</SUB></EM> from the
+vertical and in the x and y plane, respectively, <EM>B<SUB>i</SUB> </EM>is the
+buoyancy of the present element, g is the acceleration due to gravity (=9.81
+ms<SUP>-2</SUP>), and <em>Q<SUB>xi</SUB>, Q<SUB>yi</SUB></em> and
+<em>Q<SUB>zi</SUB></em> are the respective drag forces. The tension below this element
+is <EM>T<SUB>i+1</SUB></EM>, with spherical coordinate angles
+<EM>psi<sub>i+1</sub></em> and <em>theta<sub>i+1</sub></em>. Thus each element acts
+dynamically as a "hinge" in the mooring, although it may be "rigid" in reality.</p>
+
+<p>Once all of the angles have been calculated, the position of each element can be
+calculated using the length of each element, stored in array H(1,:) in MOORDESIGN.M
+and MOORDYN.M, namely <br> <img src="mdeq04.gif" width="530" height="90" align=bottom
+>.</P>
+
+<P>The tilt of each element is taken into account when estimating the drag and surface
+area (1). In particular, the drag on a spheres require no direct modification except
+that the actual velocity acting on it corresponds to the velocity at the depth of the
+"tilted" mooring. For cylinder elements, once the mooring is tilting over, several
+modifications occur. First, the exposed area in the horizontal and vertical directions
+change. Also, the drag is broken into tangential and normal components for each
+current direction acting on the element. This holds for wire/rope/chain as well (which
+are treated as cylinder segments), with tilted wire having both a reduced area and
+drag coefficient to a horizontal current, but increased exposure and drag in the
+vertical.</P>
+
+<h3>Time Varying Currents</h3>
+
+<P>The MATLAB routine MOORDYN.M can be used to "model" the mooring motion for a time
+dependent current. The latest version allows you to "model" the mooring under the
+influence of time varying currents (i.e. a time series recorded by an Acoustic Doppler
+Current Profiler), generating a MATLAB movie and vectors of the position and tension
+histories for each mooring element. The movies can be saved and viewed again later
+using the "load movie" capabilities built into Mooring Design and Dynamics. The
+present code does not estimate high frequency mooring motion, such as vibrations or
+strumming, although such calculations are possible given the Strouhal number 0.21=
+fd/<strong>U</strong>, where f is the frequency of vibration, d is the diameter of the
+cylinder element or wire, and <strong>U</strong> is the total speed past the
+device/wire.</P>
+
+<h3>Chain and Shackle Specifications</h3>
+
+<p>I have added a few scanned images of various <a href="chainspecs.html">Chain and
+Shackle Specifications</a>. These pages are direct scans from Myers, Holm and
+McAllister's "Handbook of Ocean and Underwater Engineering" (McGraw-Hill). They
+include the dimensions, weights, and strength specifications for various sizes and
+types of chains and shackles. The data are all in inches and pounds, but can easily be
+converted to metric. I did not add all of these to the database for display reasons,
+but the data for your most common mooring components can easily be added to the
+database for future and easy use in designing moorings. Although the images can be
+viewed using a hypertext browser, due to the lack of page break controls in HTML 3 I
+recommend printing the images (one per page) from image view software
+(e.g. <a href="http://www.jasc.com/">Paint Shop Pro</a>).</p>
+
+<h3>Feedback</h3>
+
+<P>If you find a bug/feature, please check that you have the latest version (and file
+date, since I make small improvements without a version increment!). Please report any
+real errors or suggested improvements for this package to <a
+href="mailto:RDewey@uvic.ca">RDewey@uvic.ca</a> I am particularly interested if you
+have mooring data (pressure records) that can be simulated and compared against model
+output. I have tested the package under <a href="http://www.mathworks.com/">MATLAB
+5.3</a> on Windows 95, 98, NT, and HP-UNIX.  See the documentation file (<a
+href="ftp://canuck.seos.uvic.ca/matlab/mooring/moordesign.txt">moordesign.txt</a>) for
+instructions on how to use the package, revisions and bugs, and future features being
+considered. I also have a draft of the
+<a href="http://canuck.seos.uvic.ca/rkd/mooring/mdd/mdd.html"
+alt="3 Minute Download at 14.4kbs">Users Guide</a> available
+describing this package, it's use and the solutions it provides.</p> <hr>
+
+
+<!-- The Matlab ring code starts here-->
+<img align="right" height="59" width="107" src="http://www.e-notebooks.com/giffiles/matlab_ring.gif" usemap="#matlab3338329" border="0">
+<map name="matlab3338329">
+<area href="http://www.e-notebooks.com/rings/matlab/help.html" coords="72,31,104,40" shape="rect" alt="[help]">
+<area href="http://www.e-notebooks.com/rings/matlab/subscribe.html" target="offsite" coords="4,30,30,40" shape="rect" title alt="[Join]">
+<area href="http://www.webring.org/cgi-bin/webring?ring=matlab;id=10;previous" target="_top" coords="4,19,35,27" shape="rect" alt=
+"[Previous Site]">
+<area href="http://www.e-notebooks.com/rings/matlab/" target="_top" coords="3,42,95,54" shape="rect" alt="[Subscribe]">
+<area href="http://www.webring.org/cgi-bin/webring?ring=matlab;id=10;next" target="_top" coords="75,18,104,29" shape="rect" alt=
+"[Next Site]">
+<area href="http://www.webring.org/cgi-bin/webring?ring=matlab;random" target="_top" coords="50,4,104,17" shape="rect" title alt=
+"[Random site]">
+<area href="http://www.webring.org/cgi-bin/webring?ring=matlab;list" target="_top" coords="3,4,30,17" shape="rect" title="List site" alt=
+"[Matlab Ring List]"><area href="http://www.e-notebooks.com/rings/matlab/" target="_top" coords="39,18,70,40" shape="rect" title=
+"Matlab Ring home page" alt="[Matlab Ring Home]"></map>
+<!--The Matlab ring code ends here-->
+
+You are visitor
+<img src="/cgi-bin/counter.exe?link=mooringpage&style=odometer&width=4&
+width=60&height=20&align=center"> since Jan 12, 1998.
+<br> If you have (working)
+speakers, you're listening to "Under The Sea" from The Little Mermaid.<br><br><hr>
+
+</BODY>
+</HTML>

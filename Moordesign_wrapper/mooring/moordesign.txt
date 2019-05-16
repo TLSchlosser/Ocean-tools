@@ -1,0 +1,403 @@
+
+                     Mooring Design and Dynamics
+               Program Version 1.06, April, 1999
+               Latest Versoin 2.3, November 2016
+                          For MATLAB v5.X
+
+                Richard K. Dewey, University of Victoria
+                           RDewey@UVic.ca
+
+This file provides simple documentation for R.Dewey's Mooring Design and Dynamics (MDD) programs. Any program/data bugs, improvements, suggestions, or user tested code that adds value or functionality to this set of programs can be forwarded to rdewey@uvic.ca (250-472-4009). I reserve the right to include only those improvements which I deem are valuable. The latest version should be available at: ftp://canuck.seos.uvic.ca/matlab/mooring/. A web page exists at: http://canuck.seos.uvic.ca/rkd/mooring/moordyn.html, which also has a link to the Users Guide, an HTML help facility to be made available for on-line help within MATLAB. This Users Guide will replace this document.
+
+**Please read this entire text file before using the programs, or contacting me with a question about a bug. I may discuss it below, and it may be a feature.**
+
+Tested under: Windows 95 and NT (4.0), and HP-UNIX(v10), with MATLAB 5.1 and 5.2. Screen Size should be >= 800X600. If smaller screen sizes are used, not all menus may be full-time viewable/legible.
+
+Disclaimer: The user takes full responsibility for designing and building a safe and reliable mooring that will allow safe and easy deployment, and safe and easy recovery. This set of programs is only an aide in evaluating different mooring designs and configurations forced by varying 3D currents. It can also be used to predict sensor heights for backing out the actual depth/height of a mooring sensor in a current. My intent is to maintain this package only as a free research tool. However, the potential uses are varied, especially once I've integrated multi-point mooring capabilities and true dynamic "interia" solutions (e.g. forced by waves).
+
+I strongly recommend reading "Berteaux, H.O., Buoy Engineering, New York, Wiley & Sons, 1976". There are helpful hints to mooring designs and safe deployment and recovery techniques. There are also discussions on materials and various component combinations. I however, did not use or follow his mooring position solutions (derived my own from first principals), although I have compared my solutions to his, and several other mooring programs. The results are favourable, in that they give similar, but not exactly the same solutions. This is likely due to the fact I use a slightly different formulation for drag, which includes the total current speed for each component (a more correct formulation).
+
+When I compared my simulated pressure (height) time series with some pressure records I made on three taut wire moorings deployed in Juan de Fuca Strait in 1997, I found agreement to within 1.5%. That is, under ADCP measured 1.5 m/s currents, my 110m mooring laid over some 15m. The measured and simulated height for the top pressure sensor were within 20cm! Considering drag coefficients are rough and based on empirical experiments, I find this agreement astounding. It has been suggested, that one could use this model to better estimate the drag, or even use a string of pressure sensors as a current array by inverting the simulated and measured records. If anyone has actual tension measurements, with which this model can be compared, I'd be very interested in simulating such records. My experience is that in tidal channels, the currents can vary substantially in the horizontal, and that even though I measured the currents with a bottom mounted ADCP, the taut wire simulations 1km away (East and West moorings) are not as good.
+
+The "Package" (mdd.zip or mooring###.zip), where ### is the latest version, includes:
+
+1  moordesign.m         Main program to design a mooring
+2  moordyn.m            Main mooring dynamics code
+3  modmoor.m            Menu to modify mooring elements
+4  loadmd.m             Menu to load previously saved mooring
+5  savemd.m             Menu to save a mooring
+6  getvelocity.m        Menu to input/load velocity profiles
+7  getwirel.m           Menu to input wire/chain length
+8  mdplot.m             Routine to plot mooring in 3D
+9  addelement.m         Menu to add and element to an existing mooring
+10 dismoor.m            Display mooring elements, positions, and tensions
+11 makemovie.m			Make a movie/timeseries of the mooring for time dependent currents
+12 savemovie.m          Save a movie or the time dependent positions.
+13 mdcodes.mat          Mat file containing mooring element information
+14 moor001.mat          An example (simple) sub-surface mooring
+15 moor002.mat          A more complicated "S" surface float mooring
+16 CDMSUM1.mat          CDMS User Manual example ssmoor 1
+17 CDMSUM2.mat          CDMS User Manual example sfmoor 1
+18 moor001ts.mat        Same mooring as in moor001.mat, but with time dependent currents.
+19 moor002ts.mat        Almost the same mooring as in moor002.mat, but with time dependent currents.
+20 vel001.mat           Example velocity profiles (UVW)
+21 moordesign.txt       This document
+22 addelehelp.mat       Help file available for adding/deleting elements
+23 velhelp.mat          Help file available for inputing velocity profiles
+24 Contents.m           Contents of the mooring directory
+25 moordyn.html         HTML documentation describing dynamics solution
+26 texture.bmp          HTML background texture
+27 mdeq01.gif           Equation gifs needed by "moordyn.html"
+28 mdeq02.gif           "
+29 mdeq03.gif           "
+30 mdeq04.gif           "
+31 tcsoutht-b.ps        Postscript plot of JdF data vs prediction top-bottom pressure.
+32 plot_elements.m		Plot vertical mooring elements/lengths/heights
+32 pltcm.m				Plot current meter elements
+33 pltchain.m			Plot a section of chain
+34 pltfloat.m			Plot float
+35 pltwire.m			Plot a section of wire/rope
+36 pltrelease.m			Plot an acoustic release
+37 pltmisc.m			Plot a miscellaneous instrument as cylinder
+38 pltanchor.m			Plot an anchor as a cylinder
+
+Store these files in a directory that should be added to your MATLAB path list (e.g. .../matlab/toolbox/local/mdd/*.*).
+
+1) INTRODUCTION
+
+Mooring Design and Dynamics can assist in the computer design and evaluation of single point oceanographic moorings. It is most useful in identifying the necessary floatation (positive buoyancy), anchor mass, instrument heights, and wire angles and tensions for moorings that will be "stressed" under sheared ocean currents.
+
+The programs can be used to construct and evaluate surface and subsurface oceanographic moorings with components selected from a preliminary database of typical mooring components/instruments. The database can be added to or modified by the user using the supplied routines. The mooring is assumed to be a single sequential string of components with at least some floatation. 3-dimensional (U,V,W) current profiles can be entered or read in and used to displace the mooring components. The velocity profiles must be defined at heights that exceed the slack mooring height for subsurface solutions, and defined to the water depth(<height of slack current mooring) for surface float moorings. z=0 is the bottom, all z's are positive upward from the bottom. The mooring dynamics program (which evaluates a solution) can be run once a mooring has been built, in order to predict the vertical and horizontal displacements of each mooring element under various current conditions and the mooring tension from top to bottom. Simple mooring examples and current profiles are included (e.g. moor001.mat and vel001.mat). If the mooring starts off as a surface mooring under weak currents, but the currents grow stronger, the model will predict when, by how much, and under what conditions the mooring will submerge. For surface moorings the model will predict the percentage of the surface float used to support the mooring. Of course, once it becomes submerged, 100% of the floatation is being used.
+
+2) MOORDESIGN (main program)
+
+Moordesign.m is the main menu/program. Start the whole ball rolling by typing "moordesign" at the MATLAB prompt. It may display the following options (some will be hidden until they are needed, i.e. "Save a Mooring"):
+
+	2.1	Design New Mooring
+			Initialize mooring design.
+	2.2	Load Existing Mooring/Save a Mooring
+			Load a previously saved mooring/save the present mooring and velocity data.
+	2.3	Add/Modify Mooring Elements
+			Modify a loaded/working mooring.
+	2.4	Set/Load Environmental Conditions
+			Enter or load a mat file with wind, and velocities and density profiles.
+	2.5	Evaluate and Plot Mooring
+			Calculate and Plot the dynamically forced mooring.
+	2.6	Display Positions & Tensions (and Elements)/ Print
+			Display or Print the present mooring elements,positions,tensions,...
+	2.7 Plot Mooring/Print
+			Plots the vertical mooring elements and labels them (no current).
+	2.8 Add/Examine Elements in Database
+	        Examine the properties, delete or add new mooring components to the database.
+	2.9 Load/Show a Movie
+	        Load/Make/Show a movie of a time dependent mooring.
+	2.10 Clear All
+	        Clears all variables in memory, and all open windows,
+			then starts MOORDESIGN.M again. Do this if things are crashing.
+	2.11 Whos
+			The standard MATLAB "whos global" just to check on the variables.
+	2.12 Close
+			Close all figure/menu windows, but variables are not cleared.
+
+2.1) Design New Mooring and 2.3) Add/Modify Mooring Elements
+
+Before building a new mooring, is it recommended that you make a draft list of all mooring elements and their anticipated lengths before running MOORDESIGN.M . "Design New Mooring" calls MODMOOR(-1) and "Add/Modify mooring Elements" calls MODMOOR(0), respectively, to initialize most mooring elements arrays. If the user has previously set/read/loaded mooring or velocity data (U,z,V,W), and set these as global variables, or run moordesign previously, then U,Z,V,W may already be assigned values and not re-initialized. Click "Clear All" to make sure all variables are initialized. A simple 120m uniform velocity profile is the default starting profile. If one wishes weaker currents, or the mooring is in deep water, the default velocity profile must be edited. This may be as simple as changing just the top height.
+
+As the CDMSUM2.mat example shows, certain materials (i.e. Nylon) stretch, and this is included in the code through a Young's Modulus of elasticity for a selected set of mooring materials. Also, when two different wire/chain/rope sections are joined together, they must be separated by a "joiner" , like a shackle. If they are not, then the "Display Position and Tensions" option will not distinguish between wire/rope sections and may crash.
+
+An anchor should be added to the bottom of the mooring for completeness, although it doesn't enter into the present solution. The output of the "Display Positions and Tension" option may not display the "last" element correctly, as it assumes an anchor is at the bottom of the mooring..
+
+It is common and the solution assumes that floatation is at the top element of all moorings. Unrealistic mooring designs, with anchors at the top for example, may cause the program to crash, or give meaningless results. Use common sense when entering mooring designs. These routines are not idiot proof: they assume a kind and knowledgeable user. MODMOOR.M displays it's own menu set:
+
+MODMOOR.M
+
+	2.1.1 Element to Add/Insert. # Once a mooring has elements, a user can add
+			or insert a new element by typing the "new" element number, indexed
+			from top to bottom. For example, if the mooring has 8 elements, the
+			default display will show "9" as the next element to add. If the user
+			edits this field and sets it to "3" , then a new element can be added
+			at position 3, and elements 3 to 8 become elements 4 to 9.
+	2.1.2 Delete Element. Once a mooring has elements, any single element can be
+	        deleted by editing this field and entering the element # to be deleted.
+	2.1.3 Element Type. (i.e. Floatation) Select the type of mooring component
+			to be added. The present options include: Floatation, Wire, Chain,
+			Current Meter, Acoustic Release, Anchor, Misc Instrument.
+	2.1.4 Element Name. (i.e. "61 in ORE") Select the element to add. This list
+			is updated automatically when a new Element Type is selected
+			(above). For wire and chain elements, the user will be requested to
+			enter the vertical length of wire/chain in meters.
+	2.1.5 Update Plot. Once a mooring has been built, it may be tested and plotted.
+			Errors may be generated if there is only one mooring element. Since
+			the mooring displacements will occur in 3-dimensions, the plot is a
+			3D plot, and simple 3D plot manipulations are provided. Same as Evaluate
+			and Plot mooring in the main window.
+	2.1.6 Display Elements. A list of the present mooring elements and their
+			vertical lengths are displayed/listed in the main MATLAB command window.
+			One	should always take a look at the elements before adding/inserting or
+			deleting any.
+	2.1.7 Close. Closes this (Mooring Add/Modify) window. Mooring elements and
+			velocity profiles will still exist in global variables.
+			They should be saved (1.6) in the event	of a system/program crash.
+
+2.2) Load Existing or Save Mooring
+
+These routines (LOADMD.M and SAVEMD.M) open "Operating System" file menu windows to enter a previously saved mooring file or save a new mat file. To load, it is assumed that these are *.mat files generated using the "Save" feature. Please do not read in dumb and inappropriate files/data. Save early, save often (courtesy LSL).
+
+2.4) Set/Load Currents and Display Currents
+
+The user may enter velocity profiles manually (z=0 at bottom, +z upwards), or load a previously saved mat file containing user specified velocity values U(z) z [V(z) W(z)]. Calls GETVELOCITY.M. Optional 2D and 3D currents can be set, or V and W are assumed to be zero (0). Water depth is determined by the height of the velocity profile. Currents are all in m/s. For subsurface mooring solutions, velocities MUST be entered for depths that exceed the height for which there will be mooring elements, including a velocity value at the bottom. For surface float moorings, the first/top (highest) velocity defines the water depth, and should be less than the length of the slack current mooring. A zero velocity value at the bottom is always a good idea. If you are reading in real velocities from a set of measurements (i.e. an ADCP or previous current meter array), then one MUST enter a bottom value (i.e. U=0 at z=0). One can also read/save density profile(s) with exactly the same depth values as the velocity profile. The default density profile is from 1024 to 1026, from top to bottom [kg/m^3].
+
+Time dependent currents and density fields may be loaded. Time dependent profiles can NOT be entered manually from the menu system. The format is U(iz,it), where the row (iz) is the depth index, and the column (it) is the time index. Separate vectors for time(it) and depth (z(iz)) must be entered. Please check these values and the matrix/vector sizes, this aspect is prone to errors and program crashes. See "VELTS.MAT" for example data formats.
+
+2.5) Evaluate and Plot Mooring
+
+Calls MDPLOT.M which runs MOORDYN.M and then plots the resulting tilted mooring in a 3-dimensional plot. The view angle about the z-axis and the vertical elevation [m] can be modified, and a plot title can be entered. The velocity profiles can be plotted against the back walls of the 3D plot. The MATLAB routine "rotate3d.m" can be clicked, and then the figure axes can be moved using the mouse to obtain different views of the mooring. Try it and see. The "print" button sends Figure(3) to the default printer. If your system is not setup with a printer, don't use this button. To save the figure in different formats or to a file (i.e. postscript), one must enter appropriate commands (i.e. "print -f3 -dps test.ps") in the MATLAB window at the command prompt. Similarly, more detailed plot modifications can be made from the MATLAB window (i.e. modify the axes labels, of add labels for the displayed elements).
+
+The required (suggested) anchor weights (dry and wet) are displayed in the MATLAB command window. The mooring element positions and wire tensions/angles can be displayed once the mooring has been plotted by clicking the "Display Positions & Tensions" button.
+
+Also see "http://canuck.seos.uvic.ca/rkd/mooring/moordyn.html" in a web browser for documentation on the solution to the mooring dynamics.
+
+2.6) Display Positions & Tensions or Print
+
+This simply displays a list of the present mooring elements and their vertical lengths on the mooring in the MATLAB command window, and if a solution has been evaluated, then the 3D positions of the mooring elements, and the wire/rope/chain tensions and angles. The results may also be printed (click "print" button). Alternately you can cut and paste the text in the MATLAB command window and print from your favourite text editor. If you don't have a printer setup, then don't click the "print" button, cut and paste the command window contents.
+
+Often it is important to know the "displacement" from an initial (un-forced) mooring configuration (zero currents). I have had requests to include the "un-forced" solution with each set of "forced" positions. However, for surface float moorings, this requires a separate (complete) run of the model, to determine the tensions, the "stretched" wire lengths, and the fraction of the surface float needed to keep the mooring afloat. I didn't want this solution done every "request". So, if you want the "displacement", run the model with all the velocities set to "0" (zero), then print out the tensions/positions.
+
+2.7) Plot Mooring/Print
+
+This version of "plot" generates a draft figure of the mooring with mooring elements that may in fact look like the mooring components (i.e. an Aanderaa looks like an Aanderaa), and also plots the element lengths and heights (on deck) with no currents or tension. Print prints this figure to the default printer.
+
+2.8) Add/Examine elements in Database
+
+Be careful with this one. This program provides direct access to the mooring element database. If one knows the dimension, "normal" drag coefficient and net sub-surface buoyancy of a new instrument/element (mass of water displaced - mass of object), than these can be added to the database and used in all subsequent mooring designs. Elements can also be deleted (must delete+re-enter to rename). If you have an extensive set of new mooring elements, it may be necessary to add a new "type", and then modify the source code to display this type. If you do this, let me know the new elements, and what you've done, so that I can consider including more elements in future releases. You can always download a new version of this file if it becomes corrupt.
+
+2.9) Load, Make, Save a Movie.
+
+If you have loaded time dependent currents, then you may "watch" the time dependent mooring using MATLAB's built in "movie" capabilities. First, all the "static" solutions for each time step are found, then a movie can be made. The resulting movie variable can be huge, so I've let you scale down the figure size. Also, to re-display the movie on a different computer, or at a different screen resolution, the figure scale factor is available when re-showing a movie. If you've got the add-on "writempeg" routines, you might be able to make mpeg files for viewing in a web browser. Once a movie has bee made, it can be saved for later viewing. Making a movie of a surface mooring can take a long time due to the long convergence for a surface mooring. The time series of mooring element positions and tensions are also saved, and they can be generated without producing a movie by clicking the "Timeseries, No Display" option. The movie matrix (M) will then be empty. The "iobj" vector/matrix contains the indices of the primary mooring elements, not the segmented wire portions.
+
+Once a movie (or just the time series, if the "No Display" option is selected) has been generated, it should be saved into a MAT file. MATLABs movies are huge (inefficient!), I wish they would do XOR operations and only update pixels that have changed, so unless you really need to view it, mostly you should run with the "No Display" option. The primary matrices generated during a time series run are [Xts Yts Zts], which are the time histories of the positions of each mooring element. The number of elements in these matrices includes the segmented wire/rope sections, so there may be many more mooring "elements" than originally entered. When one clicks "Display Positions & Tensions", the primary (non segmented) elements are those that have positions displayed. Their index into the segmented vectors are stored in the vector iobj or iobjts. For example, the index into Z for the top element (float) is Z(iobj(1)). For a time series, the index for the second non-wire/rope/joiner element would be Z(iobjts(2,it),it), where "it" is the index associated with time step ts(it).
+
+To plot a time series of the height for the third non-wire element, type "plot(ts,Zts(iobjts(3,1),:)". For most simulations the number of elements should stay the same for all time steps [thus iobsts(3,:)=constant]. However, there is a possibility with an "S" type mooring, then during very slack current periods, the top floatation device(s) may not be necessary and a solution can only be sought if these unnecessary elements are removed (temporarily). Therefore, I've kept the index into the positions for each time step iobjts(#elements,it) just incase the number of elements changes. If this happens, you'll have to be careful in pulling out the height for a particular component, as it's index will change [iobjts(3,1) at time step 1, and maybe iobjts(2,10) at time step 10 when the top element (float) has been removed].
+
+2.10) Clear All
+
+As the name implies, this button clears all variables from memory, including global values. Then it closes all open figure windows, and restarts MOORDESIGN.M again. This is useful when trying different things, and one wants to start afresh without any previous values/elements. Also, if you abort a routine while it is processing, especially the "Evaluate" or "Movie" routines, then partially saved/re-named variables may cause all sorts of subsequent errors. If you abort an operation, you should "Clear All" and re-load the mooring before proceeding.
+
+2.11) Whos
+
+The built in MATLAB whos call, that displays all loaded variables (including globals).
+
+2.12) Close
+
+Closes all open figure windows. Global variables, including the mooring elements and velocity profiles are not cleared. However, by typing MOORDESIGN.M may re-initialize some or all variables.
+
+3.0 Examples
+
+I have included several example moorings, and may continue to add new and interesting examples. You are welcome to submit interesting and informative mooring designs to me (RDewey@UVic.ca), as they may identify limitations and lead to improvements in the program.
+
+MOOR001.MAT contains a simple sub-surface mooring and velocity profiles. This mooring contains a single 37 inch float at the top, 80 metres of wire rope, a triple set of viny floats, a single Aanderaa RCM-7 current meter, an EG&G acoustic release, and a double railway wheel anchor. The velocity profile is a depth uniform 1 m/s current to the East (U). The "evaluate and plot" execution should not take long (less than a few seconds), after which the mooring should be plotted. The top of the mooring should be at 86.9 m above the bottom. A version with synthetic time varying currents is included in MOOR001TS.MAT, and a movie can be generated with this mooring file.
+
+MOOR002.MAT contains a more complicated "S" mooring, with a weaker, shallow velocity profile (100m) that will force the mooring to be a surface float configuration. This mooring was build by simply adding some wire rope and an extra set of floatation about 40 m below the top float. When searching for a solution, the algorithm tries to figure out (to within 0.01%) how much of the surface float is needed in the specified current to converge the height of the top float to within 5 cm of the true height. The bottom chain is heavy, and will "lie" on the bottom, which is assumed in the present programs to be flat. The programs will NOT handle multiple surface float moorings, i.e. it will not find a solution if more than one float sits at the surface. If this occurs, the top section(s) of the mooring is(are) removed (deleted), down to the last floating floatation.	If one really wants to figure out the positions of multiple surface floats, then one can try to get the second floats near to the surface and estimate the relative positions of the components. For MOOR002.MAT, try setting the water depth (top velocity height) to 90 m. The solution will still converge, and the second float will be just (3m) below the surface. However, if you try to set the water depth to 88 m, the solution may never converge (at least I didn't wait long enough!).
+
+MOOR002TS.MAT contains a slightly modified version of this "S" mooring (a larger second float), with time dependent currents. This mooring file can be used to generate a time series of the "S" mooring. Note that when the currents are maximum (1.5 m/s) the mooring becomes a sub-surface mooring! The display may make it appear as if it is on the surface more than it is because the plotted "symbol" for the float will appear on the figure with a radius of about 5m!
+
+CDMSUM1.mat contains an approximation to the sub-surface mooring given in Berteaux's Users Manual for his SSMOOR.EXE program. The results are certainly within the error or difference limits, due to slight differences in the component characteristics. The velocity profile stored in CDMSUM1.mat is the current profile case, setting the U velocities to zero, gives the exact solution he lists for the zero current case. Differences in element heights are mostly due to slight differences in component lengths, and the fact that his heights/depths do not include an anchor height, while I've placed a 3 Railway wheel anchor at the bottom, which has a nominal height of about 0.6 m. When such height differences are taken into account, the difference between this code and Berteaux's are small for weak current cases. They become larger for strong current cases because I calculate my drags slightly differently.
+
+CDMSUM2.mat is a surface mooring, as described in Berteaux's User Manual for SFMOOR.EXE. The water depth is 2000m and the initial length of all mooring elements is only 1950m. The mooring has a 1km section of nylon, which will stretch under tension (by about 15%), and the mooring is therefore simulated as a surface mooring. My horizontal displacements are slightly (5%) larger than Berteaux's, and I believe this is due to that fact that I calculate larger drags than he does (drag proportional to [abs(U)*Ui]). Consequently, my tensions are slightly larger, and my estimate of a safe anchor is proportionally larger.
+
+4.0 Revision History:
+
+v0.9  The first (public) release. Limited to "clean" sub-surface. Minor bug in solution.
+
+v0.91 The first working release. Also works with "clean" surface float designs.
+
+v0.92 Improved capability for surface solutions. Can do "S" moorings, where sub-surface floats DON'T reach the surface. If a second floatation device reaches the surface, and the upper floatation device(s) are not supporting the mooring, the upper "links" (wire, joiners, float) are "removed" so that a single surface float mooring, with a true "single float" solution can be calculated.
+
+v0.93 Fixed a bug which did not allow negative current values. Improved printing of mooring elements, positions, tensions, etc.
+
+v0.94 Added modulus of elasticity for wire/chain/rope elements so that, under tension, they can stretch. See CDMSUM2.mat, which has 1950 m of mooring, in 2000m of water. Compared this code against CDMS SSMOOR and SFMOOR, and found good agreement on all aspects, except drag. I have formulated the drag D=0.5*rho*Cd*A*|U|Uj, so that even vertical drag (Uj=W) is proportional to the total speed!
+
+v0.95 Modified the way I calculate drag. Now break drag into normal and tangential components. For simplicity, and with little change to accuracy, I have assumed that all cylinder type components have a tangential drag coefficient of 0.01. The results are only slightly different (1%) in element positions, but the wire tensions are all slightly (few %) larger than before.
+
+v0.96 Finally wrote the "movie" stuff. My original need was to have time dependent mooring position information, so I was always gearing for this component. Since you're reading this, you've got the "newest" mooring design feature that does not exist in any other mooring prediction package that I'm aware of. I'm almost ready to call this version 1.0!
+
+v1.0  Tested against some taut wire moorings we had out in the Strait of Juan de Fuca in July 1997 and the agreement is better than I had hoped for. We had a bottom mounted 300 kHz ADCP near the south end of a triangle of three thermistor chain moorings. The south mooring was about 110m tall, in 125m of water, the east and west moorings were about 80m tall in 100 m of water. I had pressure sensors on the top and bottom of the south and west moorings, and one on the top of the east mooring. When forced by the ADCP recorded currents, the south mooring pressure records are in excellent agreement with the model predictions. Included in the package is a postscript file (tcsoutht-b.ps) of the pressure difference between the top and bottom sensors as recorded and predicted. The currents reached about 1.5 m/s (spring tides), and the moorings lay over up to 15 m (15%). Note the pressure difference is within 20 cm at maximum tilt!
+
+v1.01 Returned from Ocean Sciences 1998 (San Diego) and modified a few things. Changed the main menu to only display options that are available and/or meaningful (i.e. Save a Mooring, only after a mooring has been loaded/entered). I've also added an option to enter a constant wind. This induces a 2% drift in the surface current, that ramps up from 10m below the surface to 2% of the wind at the surface. One enters the wind speed in m/s, and the meteorological wind direction (i.e. where the wind is coming from). If one wants to simulate Ekman drift, you need to figure out the desired rotation.
+
+v1.02 Modified the way it adds a linear wind induced profile to the top of the velocity profile. The wind influenced velocity deepens with the wind speed (i.e. a 10 m/s wind penetrates 10 m). Made some minor changes to the convergence methods after testing with winds. Some surface float moorings took too long to converge. Also allowed the user to re-size the main menu window, and the program will remember that window size and position. Also changed how the model makes a movie. First it generates the time series, then it allows the user to just save the time series of positions, or make a movie. Since MATLAB makes a movie by checking the actual "pixel" values, this is a better way, since it can take hours to generate a time series, and one may want to "hide" the mooring diagram.
+
+v1.03 Modified the views of the main menu and the way the program initializes the velocity (environmental) profiles. Functionally no different than version 1.02, but by displaying only those options which are active on the main menu, someone can't "click" <Display Mooring> before there is a mooring loaded/entered.
+
+v1.04 Added another Plot-Mooring option to display/print a mooring with real looking components. The combination of this figure and the listed components is useful when actually building a mooring.
+
+v1.05 Fixed a couple of bugs with regard to current/velocity profiles and how the programs handle and plot them. The velocity/profile data MUST have a bottom value z=0, and must have a height that exceeds the slack-water mooring height.
+
+v1.06 Further improved the convergence routine and algoritm to assist in tricky surface float solutions. I'm still not completely satisfied with the algorithm, but it seems to work most of the time.
+
+v1.1 The Marine Models Online "published" version. A typo/bug in the calculation of Y-direction drag was fixed. Also, minor improvements to the functionality of the program where made and the "published" versoin of the Users Guide was finalized.
+
+v1.2 Added a cable lift formulation from Hoerner (1965) in April 2000. The code was later updated and corrected in April 2009 (v2.1). 
+
+v2.0 Major release: added towed bodies. A towed body under a ship with an A-frame moving at a fixed speed with a 3D velocity profile below. Each towed body must have a top-of-tow rope at the top to start the build. 
+
+v2.1 Minor ungrades to the convergence algorithm.
+
+v2.2 Major release: Corrected and re-did the entire form drag formulation. There was a bug that did not calcualte the Hoerner lift drags correctly, and the solutions were not invariant to the direction of the currents. The entire form and lift drag sections of both moordyn and towdyn were re-written.
+
+v2.3 Fixed a bug for towed cylinders, correcting the angle of the bottom (towed) device. This did not affect spheres, but was critical for towed cylinders.
+
+5.0 Components/features coming soon....(check back, or email me)
+
+"Lifted" moorings ==> drifters. If a mooring originally designed or tested as a surface mooring is subjected to deep water, or such strong currents that it might "lift" the anchor off the bottom, then the mooring will become a drifter. Predicting these conditions shouldn't be difficult. This "drifter" solution, is also a variant of the hanging wire/package from a moving/stationary ship/surface platform. Also, hanging wires from the stern of a ship, which is technically a simple modification, turning the solution on it's head. I have no immediate need, so this feature may have to wait.
+
+Multi-point moorings. Again, I have no immediate need, so I'm in no rush. If someone wants to assist, or provide components, please feel free.
+
+Inverted or Hanging or Towed moorings. This solution is basically the same dynamically, but now the top floatation device/ship becomes the "fixed" reference. This would be useful for towed instruments/cables and moorings hung under ice (for example). I have had requests for this and I will fit it in when I can. I will be doing some "tows" with Rolf Luecks TOMI, so look for this feature soon.
+
+Mooring positioning routine, to facilitate mooring location using acoustic release transdonder ranges. I was out in Juan de Fuca Strat again in 1998, and one of our moorings was held down by kelp (solution? more buoyancy). It took 4 hours to come up 100m. during that time, we were pinging and doing range/postion triangulation to get a fix on it's position in case we had to drag for it. A routine to triangulate give three lat/long/range measurements would be a good utility.
+
+6.0 Real World Testing
+
+To date (Nov 1999) I know of several researchers who have tested MD&D against real data. Of these, three (incluuding myself) have reported back to me, and find excellant agreement between MD&D and actual field data. My top and bottom presure data (shown in the Users Guide) was reproduced to within 1% with MD&D. I know of one user who has compared MD&D predictions for a short mooring under ice, with significant wave action, and found good low frequency responce. Another tested MD&D with a tricky surface mooring which included a string of 14" floats at the top end. He had observed the mooring, and MD&D correctly predicted that two of the floats would be at the surface, the third just below. This reviewer also noted that another popular mooring program had difficulty with this configuration, and was not able to run with the mooring entered as deployed, and even when the program and mooring were modified to accomadate this configuration, the solutino was inaccurate. 
+
+=================================================================
+
+DEFAULT (original) AVAILABLE MOORING ELEMENTS (This list is out of date. I've added "CDMS" components that are equivalent to the mooring elements used by Berteaux's [Cable Dynamics and Mooring Systems] commercial software package.)
+
+FLOATATION:
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+61in ORE          999.000 165.0   0.0 165.0 0.65
+48in ORE          620.000 123.4   0.0 123.4 0.65
+41in ORE          433.000 104.0   0.0 104.0 0.65
+37in ORE          300.000  94.0   0.0  94.0 0.65
+28in ORE          133.000  71.0   0.0  71.0 0.65
+30in float        160.000  76.0   0.0  76.0 0.65
+Kiel SFS40in      320.000 100.0   0.0 100.0 0.65
+Torp. flt, 3-28   364.000  83.0   0.0  83.0 0.75
+17 in glass        23.000  57.0   0.0  57.0 0.95
+ORE 17in           23.000  60.0   0.0  60.0 0.95
+Billings-12in      10.000  34.3   0.0  34.3 0.95
+BENTHOS 17in       23.000  51.0   0.0  51.0 0.95
+16in Viny          19.000  40.0   0.0  40.0 0.60
+double 17in        48.000 100.0   0.0 100.0 0.95
+Double 16inViny    38.000  60.0   0.0  60.0 0.60
+Trpl 16 in Viny    56.000 150.0   0.0  60.0 0.60
+Trpl 12in glass    30.000  62.0   0.0  62.0 1.00
+
+WIRES:
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+1/4 Kevlar         -0.009 100.0   0.7   0.0 1.30
+5/16 Kevlar        -0.014 100.0   0.8   0.0 1.30
+3/8 Kevlar         -0.023 100.0   0.9   0.0 1.30
+7/16 Kevlar        -0.026 100.0   1.1   0.0 1.30
+1/2 Kevlar         -0.032 100.0   1.3   0.0 1.30
+9/16 Kevlar        -0.043 100.0   1.4   0.0 1.30
+5/8 Kevlar         -0.054 100.0   1.6   0.0 1.30
+1/4 wire rope      -0.140 100.0   0.6   0.0 1.30
+5/16 wire rope     -0.190 100.0   0.8   0.0 1.30
+3/8 wire rope      -0.330 100.0   0.9   0.0 1.30
+1/4 wire/jack      -0.130 100.0   0.8   0.0 1.30
+5/16 wire/jack     -0.186 100.0   1.1   0.0 1.30
+3/8 wire/jack      -0.318 100.0   1.3   0.0 1.30
+1/2 wire/jack      -0.547 100.0   1.7   0.0 1.30
+7/16 VLS           -0.023 100.0   1.1   0.0 1.30
+1/2 VLS            -0.041 100.0   1.3   0.0 1.30
+11mm Perlon        -0.005 100.0   1.1   0.0 1.30
+7/16 Dacron        -0.032 100.0   1.1   0.0 1.30
+1/2 Dacron         -0.041 100.0   1.3   0.0 1.30
+9/16 Dacron        -0.058 100.0   1.4   0.0 1.30
+3/4 Dacron         -0.099 100.0   1.9   0.0 1.30
+5/8 Nylon          -0.022 100.0   1.6   0.0 1.30
+3/4 Nylon          -0.030 100.0   1.9   0.0 1.30
+
+CHAINS:
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+shac-ring-shac     -0.750  30.0   2.5   0.0 1.30
+shac-3link-shac    -1.000  40.0   2.0   0.0 1.30
+1/4 chain SL       -2.690 100.0   1.5   0.0 1.30
+3/8 chain SL       -2.330 100.0   2.2   0.0 1.30
+1/2 chain SL       -4.120 100.0   3.0   0.0 1.30
+1 chain SL        -13.000 100.0   4.0   0.0 1.30
+1/2 chain LL       -3.100 100.0   3.0   0.0 1.30
+1/2 SS link        -0.200  10.0   2.5   0.0 1.30
+1/2 galv link      -0.200  10.0   2.5   0.0 1.30
+1/2 shackle        -0.300   8.0   2.5   0.0 1.30
+3/8 shackle        -0.125   4.0   2.5   0.0 1.30
+5/8 shackle        -0.650   6.5   5.0   0.0 1.30
+1 shackle          -2.200   8.0   3.0   0.0 1.30
+1/2 swivel         -0.650  14.0   5.0   0.0 1.30
+3/4 swivel         -1.500  14.0   4.0   0.0 1.30
+1/2 shac+3/8shac   -0.425  12.0   2.5   0.0 1.30
+
+CURRENT METERS
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+Aanderaa RCM-4    -17.300  55.0  12.8   0.0 1.30
+Aanderaa RCM-5    -19.500  57.0  12.8   0.0 1.30
+Aanderaa RCM-7    -18.300  55.0  12.8   0.0 1.30
+Aanderaa RCM-8    -22.700  57.0  12.8   0.0 1.30
+OEI Expend. CM     -3.600  66.0  12.8   0.0 1.30
+FSI-3DACM coast   -10.000  38.0  13.0   0.0 1.30
+EG&G VACM         -35.000 198.0  25.0   0.0 1.30
+EG&G VMCM         -30.000 170.0  25.0   0.0 1.30
+NBIS ACM-2        -13.000 120.0  20.0   0.0 1.30
+InterOcn S4 CM    -15.000  80.0   0.0  30.0 0.60
+RD ADCP           -12.000 141.0  22.0   0.0 1.30
+
+ACOUSTIC RELEASES
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+Oceano RT-121     -30.000  89.0  12.4   0.0 1.30
+Oceano RT-161     -35.000  89.0  12.4   0.0 1.30
+Oceano AR191      -26.000  85.0  11.2   0.0 1.30
+Oceano AR261      -21.000  82.0  12.4   0.0 1.30
+EG&G 8242         -28.000  94.0  13.0   0.0 1.30
+double 8242       -68.000  95.0  26.0   0.0 1.30
+double RT-161     -70.000  89.0  25.0   0.0 1.30
+double AR-191     -60.000  85.0  23.0   0.0 1.30
+double AR/EG&G    -64.000  95.0  25.0   0.0 1.30
+
+ANCHORS
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+1 Railway Wheel   454.550  15.0 100.0   0.0 1.30
+2 Railway Wheels  915.000  35.0 100.0   0.0 1.30
+3 Railway Wheels  1350.00  55.0 100.0   0.0 1.30
+4 Railway Wheels  1830.00  70.0 100.0   0.0 1.30
+1 Concrete Block  200.000  50.0  80.0   0.0 1.30
+2 Concrete Blocks 400.000  70.0 100.0   0.0 1.30
+3 Concrete Blocks 600.000 100.0 100.0   0.0 1.30
+
+MISC INSTRUMENTS
+
+Description        Buoy  Length Width Diameter Cd
+[inches]            [kg]  [cm]   [cm]  [cm]
+
+AanderaaT.chain   -12.000  55.0  12.8   0.0 1.30
+SBE-16            -10.000  45.0   8.0   0.0 1.30
+A. tide gauge     -12.000  55.0  12.8   0.0 1.30
+Keil sedmt trap   -80.000 250.0  99.9   0.0 1.30
+ULS#2/APL          15.000   0.0   0.0  65.0 1.00
+DataSonics Xpdr   -10.000  70.0  13.0   0.0 1.30
+Benthos Xpdr       -5.000   0.0   0.0  30.0 1.00
+Brancker TR1000    -0.448  26.7   5.1   0.0 1.30
+Brancker XL-200    -0.430  53.7   6.0   0.0 1.30
+Brancker XL-210     0.714  83.8   7.6   0.0 1.30
+
+==end==
